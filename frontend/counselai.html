@@ -1,0 +1,2107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CounselAI – Intelligent Legal Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+/* ═══════════════════════════════════════════════
+   DESIGN SYSTEM — CSS VARIABLES
+═══════════════════════════════════════════════ */
+:root {
+  --navy:        #0F2A44;
+  --navy-deep:   #091e33;
+  --navy-mid:    #1a3f60;
+  --navy-light:  #1e4d75;
+  --gold:        #C7A45B;
+  --gold-light:  #dfc07a;
+  --gold-pale:   #f0e3c4;
+  --white:       #ffffff;
+  --off-white:   #f7f8fc;
+  --text-body:   #2a3f56;
+  --text-muted:  #6b8399;
+  --border:      rgba(199,164,91,0.2);
+  --border-soft: rgba(255,255,255,0.5);
+  --glass-bg:    rgba(255,255,255,0.65);
+  --glass-dark:  rgba(15,42,68,0.85);
+  --shadow-sm:   0 4px 14px rgba(15,42,68,0.08);
+  --shadow-md:   0 12px 32px rgba(15,42,68,0.13);
+  --shadow-lg:   0 28px 56px rgba(15,42,68,0.18);
+  --sidebar-w:   260px;
+  --sidebar-collapsed: 72px;
+  --radius-sm:   10px;
+  --radius-md:   18px;
+  --radius-lg:   28px;
+  --radius-xl:   40px;
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body:    'DM Sans', sans-serif;
+  --transition:  0.22s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ═══════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════ */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--off-white);
+  color: var(--text-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ═══════════════════════════════════════════════
+   BACKGROUND TEXTURE
+═══════════════════════════════════════════════ */
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(199,164,91,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 100% 100%, rgba(15,42,68,0.07) 0%, transparent 50%),
+    linear-gradient(160deg, #f0f4fa 0%, #eaf0f8 40%, #f4f7fc 100%);
+  z-index: -2; pointer-events: none;
+}
+body::after {
+  content: "";
+  position: fixed; inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 79px, rgba(199,164,91,0.04) 80px),
+    repeating-linear-gradient(90deg, transparent, transparent 79px, rgba(199,164,91,0.04) 80px);
+  z-index: -1; pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════
+   LAYOUT SHELL
+═══════════════════════════════════════════════ */
+.shell {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* ═══════════════════════════════════════════════
+   LEFT SIDEBAR
+═══════════════════════════════════════════════ */
+.sidebar {
+  width: var(--sidebar-w);
+  min-height: 100vh;
+  background: var(--glass-dark);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(199,164,91,0.15);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: width var(--transition);
+  position: relative;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.sidebar.collapsed { width: var(--sidebar-collapsed); }
+
+/* sidebar header */
+.sidebar-header {
+  padding: 22px 18px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.sidebar-logo {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; color: var(--navy-deep);
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(199,164,91,0.35);
+}
+
+.sidebar-brand {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--white);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity var(--transition), max-width var(--transition);
+  max-width: 160px;
+}
+
+.collapsed .sidebar-brand { opacity: 0; max-width: 0; }
+
+.sidebar-toggle {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+.sidebar-toggle:hover { background: rgba(255,255,255,0.08); color: var(--gold); }
+
+/* new chat button */
+.new-chat-btn {
+  margin: 14px 14px 0;
+  padding: 11px 14px;
+  background: rgba(199,164,91,0.12);
+  border: 1px solid rgba(199,164,91,0.3);
+  border-radius: var(--radius-sm);
+  color: var(--gold-light);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 10px;
+  transition: var(--transition);
+  white-space: nowrap;
+  overflow: hidden;
+  width: calc(100% - 28px);
+}
+.new-chat-btn:hover {
+  background: rgba(199,164,91,0.22);
+  border-color: var(--gold);
+  color: var(--white);
+}
+.new-chat-btn .btn-icon { flex-shrink: 0; font-size: 0.9rem; }
+.new-chat-btn .btn-text { 
+  transition: opacity var(--transition), max-width var(--transition);
+  max-width: 140px; overflow: hidden;
+}
+.collapsed .new-chat-btn .btn-text { opacity: 0; max-width: 0; }
+.collapsed .new-chat-btn { justify-content: center; }
+
+/* sidebar sections */
+.sidebar-section {
+  margin-top: 18px;
+  flex-shrink: 0;
+}
+
+.sidebar-label {
+  padding: 0 18px 8px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(176,197,222,0.45);
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity var(--transition);
+}
+.collapsed .sidebar-label { opacity: 0; }
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  color: rgba(200,215,235,0.75);
+  font-size: 0.88rem;
+  cursor: pointer;
+  border-radius: 0;
+  transition: var(--transition);
+  white-space: nowrap;
+  overflow: hidden;
+  position: relative;
+}
+.sidebar-item:hover, .sidebar-item.active {
+  background: rgba(255,255,255,0.06);
+  color: var(--white);
+}
+.sidebar-item.active::before {
+  content: "";
+  position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 60%; background: var(--gold);
+  border-radius: 0 4px 4px 0;
+}
+.sidebar-item .s-icon {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+.sidebar-item .s-text {
+  transition: opacity var(--transition), max-width var(--transition);
+  max-width: 160px; overflow: hidden;
+}
+.collapsed .sidebar-item .s-text { opacity: 0; max-width: 0; }
+.collapsed .sidebar-item { padding: 10px; justify-content: center; }
+
+.sidebar-item .s-badge {
+  margin-left: auto;
+  background: rgba(199,164,91,0.2);
+  color: var(--gold-light);
+  font-size: 0.65rem;
+  padding: 2px 7px;
+  border-radius: 20px;
+  transition: opacity var(--transition);
+}
+.collapsed .sidebar-badge { opacity: 0; }
+
+/* history items */
+.history-preview {
+  font-size: 0.78rem;
+  color: rgba(176,197,222,0.5);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 155px;
+}
+.collapsed .history-preview { display: none; }
+
+/* sidebar footer */
+.sidebar-footer {
+  margin-top: auto;
+  padding: 14px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.user-avatar-sm {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--navy-mid), var(--navy-light));
+  border: 2px solid rgba(199,164,91,0.4);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem;
+  color: var(--gold-light);
+  flex-shrink: 0;
+}
+.user-info { overflow: hidden; }
+.user-name {
+  font-size: 0.84rem; font-weight: 500; color: var(--white);
+  white-space: nowrap; overflow: hidden;
+  transition: opacity var(--transition);
+}
+.user-role {
+  font-size: 0.7rem; color: rgba(176,197,222,0.5);
+  white-space: nowrap;
+  transition: opacity var(--transition);
+}
+.collapsed .user-name, .collapsed .user-role { opacity: 0; }
+
+/* ═══════════════════════════════════════════════
+   MAIN CONTENT AREA
+═══════════════════════════════════════════════ */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════
+   TOP HEADER BAR
+═══════════════════════════════════════════════ */
+.topbar {
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
+  height: 64px;
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(199,164,91,0.15);
+  gap: 16px;
+  flex-shrink: 0;
+  position: sticky; top: 0; z-index: 40;
+}
+
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+
+.topbar-title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.topbar-status {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.pulse-dot {
+  width: 8px; height: 8px;
+  background: #22c55e;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(34,197,94,0.5);
+  animation: pulse-ring 2s infinite;
+}
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+  70%  { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+  100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+}
+
+.topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+.topbar-btn {
+  height: 36px; padding: 0 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-body);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  transition: var(--transition);
+}
+.topbar-btn:hover {
+  background: var(--glass-bg);
+  border-color: var(--gold);
+  color: var(--navy);
+}
+.topbar-btn.primary {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: var(--white);
+}
+.topbar-btn.primary:hover {
+  background: var(--navy-mid);
+  box-shadow: 0 4px 14px rgba(15,42,68,0.25);
+}
+
+/* ═══════════════════════════════════════════════
+   SCROLL CONTAINER
+═══════════════════════════════════════════════ */
+.content-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 28px 28px;
+  scroll-behavior: smooth;
+}
+.content-scroll::-webkit-scrollbar { width: 5px; }
+.content-scroll::-webkit-scrollbar-track { background: transparent; }
+.content-scroll::-webkit-scrollbar-thumb {
+  background: rgba(199,164,91,0.3);
+  border-radius: 10px;
+}
+
+/* ═══════════════════════════════════════════════
+   HERO SECTION
+═══════════════════════════════════════════════ */
+.hero {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-xl);
+  padding: 44px 40px 40px;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  animation: fadeUp 0.6s ease both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* hero background decoration */
+.hero::before {
+  content: "";
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(199,164,91,0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  bottom: -40px; left: -40px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(15,42,68,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  background: rgba(199,164,91,0.1);
+  border: 1px solid rgba(199,164,91,0.3);
+  border-radius: 40px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 18px;
+}
+
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+.hero h1 .accent { color: var(--gold); }
+
+.hero-sub {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  max-width: 560px;
+  margin-bottom: 28px;
+}
+
+.hero-trust {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+.trust-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-body);
+  font-weight: 500;
+}
+.trust-icon {
+  width: 32px; height: 32px;
+  background: rgba(199,164,91,0.1);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem;
+  color: var(--gold);
+}
+
+/* ═══════════════════════════════════════════════
+   QUICK ACTION CARDS
+═══════════════════════════════════════════════ */
+.section-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+  animation: fadeUp 0.6s 0.1s ease both;
+}
+
+.q-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+.q-card::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(199,164,91,0.06), transparent);
+  opacity: 0;
+  transition: var(--transition);
+}
+.q-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 36px -10px rgba(15,42,68,0.15);
+  border-color: var(--gold);
+}
+.q-card:hover::after { opacity: 1; }
+
+.q-card-icon {
+  width: 40px; height: 40px;
+  background: rgba(15,42,68,0.06);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+  color: var(--navy);
+  transition: var(--transition);
+}
+.q-card:hover .q-card-icon {
+  background: var(--navy);
+  color: var(--gold);
+}
+.q-card-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.3;
+}
+.q-card-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════════════
+   MAIN CHAT AREA + DOC PANEL (two-col)
+═══════════════════════════════════════════════ */
+.workspace {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+  margin-bottom: 28px;
+  animation: fadeUp 0.6s 0.15s ease both;
+}
+
+/* ═══════════════════════════════════════════════
+   CHAT PANEL
+═══════════════════════════════════════════════ */
+.chat-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  min-height: 540px;
+}
+
+.chat-panel-header {
+  padding: 18px 22px;
+  border-bottom: 1px solid rgba(199,164,91,0.12);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.chat-panel-header .ph-icon {
+  width: 36px; height: 36px;
+  background: var(--navy);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold);
+  font-size: 1rem;
+}
+.chat-panel-header .ph-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--navy);
+}
+.chat-panel-header .ph-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.chat-panel-header .ph-actions { margin-left: auto; display: flex; gap: 6px; }
+
+.ph-icon-btn {
+  width: 32px; height: 32px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.ph-icon-btn:hover { background: rgba(199,164,91,0.1); color: var(--gold); border-color: var(--gold); }
+
+/* messages area */
+.messages-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  scroll-behavior: smooth;
+}
+.messages-area::-webkit-scrollbar { width: 4px; }
+.messages-area::-webkit-scrollbar-track { background: transparent; }
+.messages-area::-webkit-scrollbar-thumb { background: rgba(199,164,91,0.25); border-radius: 10px; }
+
+/* message wrapper */
+.msg-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  animation: msgIn 0.3s ease both;
+}
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.msg-row.user { flex-direction: row-reverse; }
+
+/* avatars */
+.msg-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+.msg-row.ai .msg-avatar {
+  background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+  color: var(--gold);
+  border: 2px solid rgba(199,164,91,0.35);
+}
+.msg-row.user .msg-avatar {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: var(--navy-deep);
+  border: 2px solid rgba(199,164,91,0.5);
+}
+
+/* bubble */
+.msg-content { max-width: 76%; display: flex; flex-direction: column; gap: 6px; }
+
+.bubble {
+  padding: 14px 18px;
+  border-radius: 18px;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  word-break: break-word;
+  position: relative;
+}
+.msg-row.ai .bubble {
+  background: var(--white);
+  color: var(--text-body);
+  border: 1px solid rgba(199,164,91,0.15);
+  border-radius: 4px 18px 18px 18px;
+  box-shadow: var(--shadow-sm);
+}
+.msg-row.user .bubble {
+  background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+  color: var(--white);
+  border-radius: 18px 4px 18px 18px;
+}
+
+/* markdown inside bubble */
+.bubble strong { font-weight: 600; }
+.bubble em { font-style: italic; }
+.bubble code {
+  background: rgba(15,42,68,0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-family: 'Courier New', monospace;
+  color: var(--navy);
+}
+.msg-row.user .bubble code {
+  background: rgba(255,255,255,0.15);
+  color: var(--gold-pale);
+}
+
+/* message meta */
+.msg-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+}
+.msg-time {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+.msg-row.user .msg-meta { flex-direction: row-reverse; }
+
+/* action toolbar (AI messages) */
+.msg-toolbar {
+  display: flex;
+  gap: 2px;
+  margin-left: 2px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.msg-row.ai:hover .msg-toolbar { opacity: 1; }
+
+.tb-btn {
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex; align-items: center; gap: 4px;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.tb-btn:hover { background: rgba(199,164,91,0.12); color: var(--navy); }
+.tb-btn.copied { color: #22c55e; }
+
+/* ═══════════════════════════════════════════════
+   THINKING INDICATOR
+═══════════════════════════════════════════════ */
+.thinking-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.thinking-bubble {
+  background: var(--white);
+  border: 1px solid rgba(199,164,91,0.15);
+  border-radius: 4px 18px 18px 18px;
+  padding: 14px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: var(--shadow-sm);
+  min-width: 240px;
+}
+.thinking-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.thinking-label .spinner {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(199,164,91,0.2);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.thinking-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.t-dot {
+  width: 8px; height: 8px;
+  background: var(--gold);
+  border-radius: 50%;
+  opacity: 0.4;
+  animation: tDot 1.4s infinite;
+}
+.t-dot:nth-child(2) { animation-delay: 0.2s; }
+.t-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes tDot {
+  0%, 60%, 100% { transform: scale(1); opacity: 0.4; }
+  30% { transform: scale(1.3); opacity: 1; }
+}
+
+.thinking-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.t-step {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  animation: stepIn 0.4s ease forwards;
+}
+.t-step i { color: var(--gold); font-size: 0.65rem; }
+@keyframes stepIn {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ═══════════════════════════════════════════════
+   CHAT INPUT
+═══════════════════════════════════════════════ */
+.chat-input-wrap {
+  padding: 16px 18px;
+  border-top: 1px solid rgba(199,164,91,0.1);
+  background: rgba(255,255,255,0.5);
+}
+
+.input-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--white);
+  border: 1.5px solid rgba(199,164,91,0.25);
+  border-radius: 50px;
+  padding: 6px 8px 6px 20px;
+  box-shadow: 0 4px 16px rgba(15,42,68,0.07);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input-bar:focus-within {
+  border-color: var(--gold);
+  box-shadow: 0 4px 16px rgba(199,164,91,0.15);
+}
+
+#userInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 0.93rem;
+  color: var(--navy);
+  padding: 10px 0;
+}
+#userInput::placeholder { color: rgba(107,131,153,0.6); }
+
+.input-icon-btn {
+  width: 34px; height: 34px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.input-icon-btn:hover { background: rgba(199,164,91,0.12); color: var(--gold); }
+
+.send-btn {
+  height: 40px; padding: 0 20px;
+  background: var(--navy);
+  border: none;
+  border-radius: 50px;
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 7px;
+  transition: var(--transition);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.send-btn:hover {
+  background: var(--navy-mid);
+  border-color: var(--gold);
+  box-shadow: 0 6px 18px rgba(15,42,68,0.25);
+  transform: translateY(-1px);
+}
+.send-btn:active { transform: scale(0.97); }
+.send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.input-hint {
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+/* ═══════════════════════════════════════════════
+   RIGHT PANEL — DOCUMENT ANALYSIS
+═══════════════════════════════════════════════ */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.panel-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.panel-card-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(199,164,91,0.1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel-card-header .pc-icon {
+  width: 28px; height: 28px;
+  background: rgba(15,42,68,0.07);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem;
+  color: var(--navy);
+}
+.panel-card-header .pc-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--navy);
+}
+.panel-card-header .pc-badge {
+  margin-left: auto;
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  background: rgba(199,164,91,0.12);
+  color: var(--gold);
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.panel-card-body { padding: 16px 18px; }
+
+/* upload area */
+.upload-area {
+  border: 2px dashed rgba(199,164,91,0.25);
+  border-radius: var(--radius-md);
+  padding: 22px 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition);
+  background: rgba(199,164,91,0.02);
+}
+.upload-area:hover {
+  border-color: var(--gold);
+  background: rgba(199,164,91,0.06);
+}
+.upload-area .up-icon {
+  font-size: 1.6rem;
+  color: rgba(199,164,91,0.6);
+  margin-bottom: 8px;
+}
+.upload-area .up-text {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.upload-area .up-text span { color: var(--gold); font-weight: 600; }
+
+.doc-types {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.doc-type-tag {
+  padding: 3px 10px;
+  background: rgba(15,42,68,0.06);
+  border-radius: 20px;
+  font-size: 0.7rem;
+  color: var(--text-body);
+  cursor: pointer;
+  transition: var(--transition);
+  border: 1px solid transparent;
+}
+.doc-type-tag:hover {
+  background: rgba(199,164,91,0.1);
+  border-color: var(--gold);
+  color: var(--navy);
+}
+
+/* analysis result card */
+.analysis-card {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+.analysis-card.visible { display: flex; }
+
+.analysis-card .a-header {
+  display: flex; align-items: center; gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(199,164,91,0.12);
+}
+.analysis-card .a-header .a-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--navy), var(--navy-mid));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; color: var(--gold);
+}
+.a-title { font-size: 0.88rem; font-weight: 600; color: var(--navy); }
+.a-doc-name { font-size: 0.7rem; color: var(--text-muted); }
+
+.analysis-metric {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  padding: 4px 0;
+}
+.am-label { color: var(--text-muted); }
+.am-value { font-weight: 600; color: var(--navy); }
+.am-value.risk-low  { color: #22c55e; }
+.am-value.risk-med  { color: #f59e0b; }
+.am-value.risk-high { color: #ef4444; }
+
+.risk-bar {
+  height: 4px;
+  background: rgba(15,42,68,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 4px 0 8px;
+}
+.risk-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #f59e0b, #ef4444);
+  border-radius: 4px;
+  transition: width 0.8s ease;
+}
+
+.a-recommendation {
+  background: rgba(199,164,91,0.08);
+  border: 1px solid rgba(199,164,91,0.2);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 0.8rem;
+  color: var(--text-body);
+  line-height: 1.5;
+}
+.a-recommendation .a-rec-label {
+  font-weight: 600;
+  color: var(--navy);
+  display: flex; align-items: center; gap: 5px;
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.a-recommendation .a-rec-label i { color: var(--gold); }
+
+.a-clauses { margin-top: 2px; }
+.a-clause-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(199,164,91,0.08);
+  font-size: 0.8rem;
+}
+.a-clause-item:last-child { border-bottom: none; }
+.clause-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.clause-dot.high   { background: #ef4444; }
+.clause-dot.medium { background: #f59e0b; }
+.clause-dot.low    { background: #22c55e; }
+.clause-label { color: var(--text-body); flex: 1; }
+.clause-risk  { font-size: 0.7rem; color: var(--text-muted); }
+
+/* ═══════════════════════════════════════════════
+   LEGAL RESOURCES SECTION
+═══════════════════════════════════════════════ */
+.resources-section {
+  margin-bottom: 32px;
+  animation: fadeUp 0.6s 0.2s ease both;
+}
+
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.res-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 18px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+}
+.res-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--gold);
+  box-shadow: var(--shadow-md);
+}
+.res-card .rc-icon {
+  width: 36px; height: 36px;
+  background: rgba(15,42,68,0.07);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.95rem;
+  color: var(--navy);
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+.res-card:hover .rc-icon {
+  background: var(--navy);
+  color: var(--gold);
+}
+.rc-title {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--navy);
+  margin-bottom: 2px;
+}
+.rc-desc {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════════ */
+.page-footer {
+  text-align: center;
+  padding: 20px 28px 28px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  border-top: 1px solid rgba(199,164,91,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: transparent;
+  flex-shrink: 0;
+}
+.page-footer i { color: var(--gold); }
+
+/* ═══════════════════════════════════════════════
+   MOBILE OVERLAY SIDEBAR
+═══════════════════════════════════════════════ */
+.sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(15,42,68,0.5);
+  z-index: 49;
+  backdrop-filter: blur(2px);
+}
+.sidebar-overlay.visible { display: block; }
+
+/* ═══════════════════════════════════════════════
+   TOAST NOTIFICATIONS
+═══════════════════════════════════════════════ */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  background: var(--navy);
+  color: var(--white);
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 0.83rem;
+  font-weight: 500;
+  border-left: 3px solid var(--gold);
+  box-shadow: var(--shadow-md);
+  animation: toastIn 0.3s ease both;
+  display: flex; align-items: center; gap: 8px;
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.toast.fadeout {
+  animation: toastOut 0.3s ease both;
+}
+@keyframes toastOut {
+  to { opacity: 0; transform: translateX(20px); }
+}
+
+/* ═══════════════════════════════════════════════
+   RIPPLE EFFECT
+═══════════════════════════════════════════════ */
+.ripple-btn {
+  position: relative;
+  overflow: hidden;
+}
+.ripple-btn::after {
+  content: "";
+  position: absolute;
+  width: 100%; height: 100%;
+  top: 0; left: 0;
+  background: rgba(255,255,255,0.2);
+  transform: scale(0);
+  border-radius: inherit;
+  transition: transform 0.4s, opacity 0.4s;
+  opacity: 1;
+}
+.ripple-btn:active::after {
+  transform: scale(2);
+  opacity: 0;
+}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════ */
+@media (max-width: 1100px) {
+  .workspace { grid-template-columns: 1fr; }
+  .right-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .quick-grid { grid-template-columns: repeat(2, 1fr); }
+  .resources-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform var(--transition), width var(--transition);
+    width: var(--sidebar-w) !important;
+  }
+  .sidebar.mobile-open { transform: translateX(0); }
+  .sidebar-toggle { display: none; }
+  .main { margin-left: 0 !important; }
+  .content-scroll { padding: 20px 18px 20px; }
+  .hero { padding: 30px 24px; border-radius: var(--radius-lg); }
+  .hero h1 { font-size: 1.9rem; }
+  .topbar { padding: 0 18px; }
+  .right-panel { grid-template-columns: 1fr; }
+  .quick-grid { grid-template-columns: repeat(2, 1fr); }
+  .resources-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 480px) {
+  .quick-grid { grid-template-columns: 1fr 1fr; }
+  .resources-grid { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 1.6rem; }
+  .hero-trust { gap: 14px; }
+  .msg-content { max-width: 88%; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════ TOAST CONTAINER ════════ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ════════ MOBILE SIDEBAR OVERLAY ════════ -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
+
+<div class="shell">
+
+  <!-- ══════════════════════════════════
+       LEFT SIDEBAR
+  ══════════════════════════════════ -->
+  <aside class="sidebar" id="sidebar">
+
+    <div class="sidebar-header">
+      <div class="sidebar-logo"><i class="fas fa-scale-balanced"></i></div>
+      <span class="sidebar-brand">CounselAI</span>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Collapse sidebar">
+        <i class="fas fa-chevron-left" id="toggleIcon"></i>
+      </button>
+    </div>
+
+    <button class="new-chat-btn ripple-btn" onclick="startNewChat()">
+      <i class="fas fa-plus btn-icon"></i>
+      <span class="btn-text">New Conversation</span>
+    </button>
+
+    <!-- Recent history -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">Recent</div>
+      <div class="sidebar-item active" onclick="loadHistory(this)">
+        <div class="s-icon"><i class="fas fa-message"></i></div>
+        <div>
+          <div class="s-text">Property Dispute</div>
+          <div class="history-preview">What are my property rights?</div>
+        </div>
+      </div>
+      <div class="sidebar-item" onclick="loadHistory(this)">
+        <div class="s-icon"><i class="fas fa-message"></i></div>
+        <div>
+          <div class="s-text">Contract Review</div>
+          <div class="history-preview">Explain the indemnity clause...</div>
+        </div>
+      </div>
+      <div class="sidebar-item" onclick="loadHistory(this)">
+        <div class="s-icon"><i class="fas fa-message"></i></div>
+        <div>
+          <div class="s-text">Tenant Rights</div>
+          <div class="history-preview">Can my landlord evict me?</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Tools -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">AI Tools</div>
+      <div class="sidebar-item" onclick="showToast('Document Analyzer opening...', 'fa-file-magnifying-glass')">
+        <div class="s-icon"><i class="fas fa-file-magnifying-glass"></i></div>
+        <div class="s-text">Document Analyzer</div>
+        <div class="s-badge">New</div>
+      </div>
+      <div class="sidebar-item" onclick="showToast('Contract Drafter opening...', 'fa-pen-to-square')">
+        <div class="s-icon"><i class="fas fa-pen-to-square"></i></div>
+        <div class="s-text">Contract Drafter</div>
+      </div>
+      <div class="sidebar-item" onclick="showToast('Complaint Generator opening...', 'fa-triangle-exclamation')">
+        <div class="s-icon"><i class="fas fa-triangle-exclamation"></i></div>
+        <div class="s-text">Complaint Generator</div>
+      </div>
+    </div>
+
+    <!-- Document Library -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">Document Library</div>
+      <div class="sidebar-item" onclick="showToast('Opening document library...', 'fa-folder-open')">
+        <div class="s-icon"><i class="fas fa-folder-open"></i></div>
+        <div class="s-text">My Documents</div>
+        <div class="s-badge">3</div>
+      </div>
+      <div class="sidebar-item" onclick="showToast('Opening templates...', 'fa-copy')">
+        <div class="s-icon"><i class="fas fa-copy"></i></div>
+        <div class="s-text">Templates</div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-avatar-sm"><i class="fas fa-user"></i></div>
+      <div class="user-info">
+        <div class="user-name">Guest User</div>
+        <div class="user-role">Free Plan</div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ══════════════════════════════════
+       MAIN CONTENT
+  ══════════════════════════════════ -->
+  <main class="main" id="mainContent">
+
+    <!-- Top Bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <!-- mobile menu button -->
+        <button class="topbar-btn" id="mobileMenuBtn" onclick="openMobileSidebar()" style="display:none; padding:0 10px;">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div class="topbar-title">Legal Assistant</div>
+        <div class="topbar-status">
+          <span class="pulse-dot"></span>
+          AI Online · 30+ documents indexed
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-btn" onclick="showToast('Exporting session...', 'fa-download')">
+          <i class="fas fa-download"></i> Export
+        </button>
+        <button class="topbar-btn" onclick="showToast('Sharing link copied!', 'fa-share')">
+          <i class="fas fa-share-nodes"></i> Share
+        </button>
+        <button class="topbar-btn primary ripple-btn" onclick="showUpgradeModal()">
+          <i class="fas fa-bolt"></i> Upgrade
+        </button>
+      </div>
+    </header>
+
+    <!-- Scrollable Content -->
+    <div class="content-scroll" id="contentScroll">
+
+      <!-- HERO -->
+      <div class="hero">
+        <div class="hero-badge"><i class="fas fa-shield-halved"></i> Trusted Legal AI</div>
+        <h1>Your <span class="accent">Intelligent</span><br>Legal Counsel</h1>
+        <p class="hero-sub">
+          AI-powered guidance for property disputes, contract analysis, and legal complaints — informed by 30+ real legal documents.
+        </p>
+        <div class="hero-trust">
+          <div class="trust-item">
+            <div class="trust-icon"><i class="fas fa-file-contract"></i></div>
+            30+ Legal Documents
+          </div>
+          <div class="trust-item">
+            <div class="trust-icon"><i class="fas fa-clock"></i></div>
+            24/7 Availability
+          </div>
+          <div class="trust-item">
+            <div class="trust-icon"><i class="fas fa-lock"></i></div>
+            Private & Secure
+          </div>
+          <div class="trust-item">
+            <div class="trust-icon"><i class="fas fa-brain"></i></div>
+            AI-Powered Analysis
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div class="section-label">Quick Actions</div>
+      <div class="quick-grid">
+        <div class="q-card ripple-btn" onclick="injectQuestion('What are my property rights if a landlord refuses to return my deposit?')">
+          <div class="q-card-icon"><i class="fas fa-house"></i></div>
+          <div class="q-card-title">Property Rights</div>
+          <div class="q-card-hint">Dispute, ownership & tenant rights</div>
+        </div>
+        <div class="q-card ripple-btn" onclick="injectQuestion('How do I file a legal complaint against a contractor who did not complete the work?')">
+          <div class="q-card-icon"><i class="fas fa-file-alt"></i></div>
+          <div class="q-card-title">File a Complaint</div>
+          <div class="q-card-hint">Step-by-step complaint guide</div>
+        </div>
+        <div class="q-card ripple-btn" onclick="injectQuestion('Where can I find free legal aid or pro bono services?')">
+          <div class="q-card-icon"><i class="fas fa-hand-holding-heart"></i></div>
+          <div class="q-card-title">Legal Aid</div>
+          <div class="q-card-hint">Find free legal assistance</div>
+        </div>
+        <div class="q-card ripple-btn" onclick="injectQuestion('Explain the key clauses I should review in a service contract before signing.')">
+          <div class="q-card-icon"><i class="fas fa-file-signature"></i></div>
+          <div class="q-card-title">Contract Review</div>
+          <div class="q-card-hint">Key clauses & risk analysis</div>
+        </div>
+      </div>
+
+      <!-- WORKSPACE: CHAT + RIGHT PANEL -->
+      <div class="workspace">
+
+        <!-- CHAT PANEL -->
+        <div class="chat-panel">
+          <div class="chat-panel-header">
+            <div class="ph-icon"><i class="fas fa-gavel"></i></div>
+            <div>
+              <div class="ph-title">CounselAI</div>
+              <div class="ph-sub">General Legal Guidance</div>
+            </div>
+            <div class="ph-actions">
+              <button class="ph-icon-btn" title="Clear chat" onclick="clearChat()"><i class="fas fa-broom"></i></button>
+              <button class="ph-icon-btn" title="Export chat" onclick="showToast('Chat exported!', 'fa-download')"><i class="fas fa-download"></i></button>
+              <button class="ph-icon-btn" title="Settings" onclick="showToast('Settings coming soon.', 'fa-gear')"><i class="fas fa-gear"></i></button>
+            </div>
+          </div>
+
+          <div class="messages-area" id="messagesArea">
+            <!-- Initial AI message -->
+            <div class="msg-row ai" id="welcomeMsg">
+              <div class="msg-avatar"><i class="fas fa-gavel"></i></div>
+              <div class="msg-content">
+                <div class="bubble">
+                  Good day. I am <strong>CounselAI</strong> — your intelligent legal assistant.<br><br>
+                  I can assist with <strong>property disputes</strong>, <strong>contract analysis</strong>, <strong>legal complaints</strong>, and <strong>finding legal aid</strong>. My responses draw from analysis of 30+ legal documents.<br><br>
+                  How may I assist you today?
+                </div>
+                <div class="msg-meta">
+                  <span class="msg-time" id="welcomeTime"></span>
+                  <div class="msg-toolbar">
+                    <button class="tb-btn" onclick="copyMsg(this, 'Good day. I am CounselAI...')"><i class="far fa-copy"></i> Copy</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thinking indicator (hidden) -->
+          <div id="thinkingIndicator" style="display:none; padding: 0 20px 12px;">
+            <div class="thinking-row">
+              <div class="msg-avatar" style="background:linear-gradient(135deg,#0F2A44,#1a3f60);border:2px solid rgba(199,164,91,0.35);color:#C7A45B;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="fas fa-gavel"></i>
+              </div>
+              <div class="thinking-bubble">
+                <div class="thinking-label">
+                  <span class="spinner"></span>
+                  CounselAI is analyzing your query...
+                </div>
+                <div class="thinking-steps" id="thinkingSteps"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-input-wrap">
+            <div class="input-bar">
+              <input type="text" id="userInput" placeholder="Describe your legal issue or question..." autocomplete="off">
+              <button class="input-icon-btn" id="attachInputBtn" title="Attach document" onclick="triggerDocUpload()">
+                <i class="fas fa-paperclip"></i>
+              </button>
+              <button class="input-icon-btn" title="Voice input" onclick="showToast('Voice input coming soon.', 'fa-microphone')">
+                <i class="fas fa-microphone"></i>
+              </button>
+              <button class="send-btn ripple-btn" id="sendBtn" onclick="handleSend()">
+                Send <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+            <div class="input-hint"><i class="fas fa-info-circle" style="color:var(--gold);"></i> CounselAI provides general legal information — not a substitute for a qualified lawyer.</div>
+          </div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="right-panel">
+
+          <!-- Document Upload Card -->
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <div class="pc-icon"><i class="fas fa-file-arrow-up"></i></div>
+              <span class="pc-title">Document Analysis</span>
+              <span class="pc-badge">AI-Powered</span>
+            </div>
+            <div class="panel-card-body">
+              <div class="upload-area" id="uploadArea" onclick="triggerDocUpload()" ondragover="handleDragOver(event)" ondrop="handleDrop(event)">
+                <div class="up-icon"><i class="fas fa-cloud-arrow-up"></i></div>
+                <div class="up-text">
+                  <span>Click to upload</span> or drag & drop<br>
+                  your legal document for instant AI analysis
+                </div>
+              </div>
+              <div class="doc-types">
+                <span class="doc-type-tag" onclick="simulateDocAnalysis('Contract')">📄 Contract</span>
+                <span class="doc-type-tag" onclick="simulateDocAnalysis('Property Deed')">🏠 Property Deed</span>
+                <span class="doc-type-tag" onclick="simulateDocAnalysis('Complaint Draft')">📋 Complaint</span>
+                <span class="doc-type-tag" onclick="simulateDocAnalysis('Lease Agreement')">🔑 Lease</span>
+              </div>
+              <input type="file" id="fileInput" style="display:none" accept=".pdf,.doc,.docx,.txt" onchange="handleFileChange(event)">
+            </div>
+          </div>
+
+          <!-- Analysis Result Card -->
+          <div class="panel-card">
+            <div class="panel-card-header">
+              <div class="pc-icon"><i class="fas fa-magnifying-glass-chart"></i></div>
+              <span class="pc-title">AI Analysis</span>
+              <span class="pc-badge" id="analysisBadge" style="display:none;">Complete</span>
+            </div>
+            <div class="panel-card-body">
+              <div id="analysisPlaceholder" style="text-align:center; padding: 28px 0; color: var(--text-muted); font-size:0.82rem;">
+                <i class="fas fa-chart-pie" style="font-size:2rem; opacity:0.2; display:block; margin-bottom:10px;"></i>
+                Upload a document to see AI analysis results
+              </div>
+              <div class="analysis-card" id="analysisCard">
+                <div class="a-header">
+                  <div class="a-icon"><i class="fas fa-file-contract"></i></div>
+                  <div>
+                    <div class="a-title">AI Analysis</div>
+                    <div class="a-doc-name" id="aDocName">document.pdf</div>
+                  </div>
+                </div>
+                <div class="analysis-metric">
+                  <span class="am-label">Risk Level</span>
+                  <span class="am-value" id="aRiskLabel">—</span>
+                </div>
+                <div class="risk-bar"><div class="risk-fill" id="aRiskFill" style="width:0%"></div></div>
+                <div class="analysis-metric">
+                  <span class="am-label">Key Clauses Detected</span>
+                  <span class="am-value" id="aClauseCount">—</span>
+                </div>
+                <div class="analysis-metric">
+                  <span class="am-label">Confidence Score</span>
+                  <span class="am-value" id="aConfidence">—</span>
+                </div>
+                <div class="a-clauses" id="aClauses"></div>
+                <div class="a-recommendation" id="aRecommendation">
+                  <div class="a-rec-label"><i class="fas fa-lightbulb"></i> Recommendation</div>
+                  <span id="aRecText">—</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /right-panel -->
+      </div><!-- /workspace -->
+
+      <!-- LEGAL RESOURCES -->
+      <div class="resources-section">
+        <div class="section-label">Legal Resources</div>
+        <div class="resources-grid">
+          <div class="res-card" onclick="injectQuestion('Give me an overview of property law: ownership, transfer, and disputes.')">
+            <div class="rc-icon"><i class="fas fa-house-chimney"></i></div>
+            <div>
+              <div class="rc-title">Property Law Guide</div>
+              <div class="rc-desc">Ownership, transfers, boundary disputes</div>
+            </div>
+          </div>
+          <div class="res-card" onclick="injectQuestion('What are the key tenant rights regarding eviction, repairs, and deposit return?')">
+            <div class="rc-icon"><i class="fas fa-person-shelter"></i></div>
+            <div>
+              <div class="rc-title">Tenant Rights</div>
+              <div class="rc-desc">Eviction, repairs, security deposits</div>
+            </div>
+          </div>
+          <div class="res-card" onclick="injectQuestion('What are the essential elements and key clauses in a legally binding contract?')">
+            <div class="rc-icon"><i class="fas fa-file-signature"></i></div>
+            <div>
+              <div class="rc-title">Contract Basics</div>
+              <div class="rc-desc">Formation, obligations, enforceability</div>
+            </div>
+          </div>
+          <div class="res-card" onclick="injectQuestion('Walk me through the complete process of filing a legal complaint in civil court.')">
+            <div class="rc-icon"><i class="fas fa-gavel"></i></div>
+            <div>
+              <div class="rc-title">Filing a Complaint</div>
+              <div class="rc-desc">Civil procedure step-by-step</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content-scroll -->
+
+    <!-- Footer -->
+    <footer class="page-footer">
+      <i class="fas fa-shield-halved"></i>
+      CounselAI provides general legal information only. Always consult a qualified lawyer for official legal advice.
+      <i class="fas fa-balance-scale"></i>
+      <span style="opacity:0.5">© 2025 CounselAI</span>
+    </footer>
+
+  </main>
+</div>
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════ -->
+<script>
+// ── DOM references ──────────────────────────────────────
+const sidebar       = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebarToggle');
+const toggleIcon    = document.getElementById('toggleIcon');
+const mainContent   = document.getElementById('mainContent');
+const messagesArea  = document.getElementById('messagesArea');
+const userInput     = document.getElementById('userInput');
+const sendBtn       = document.getElementById('sendBtn');
+const thinkingEl    = document.getElementById('thinkingIndicator');
+const thinkingSteps = document.getElementById('thinkingSteps');
+const toastContainer= document.getElementById('toastContainer');
+const fileInput     = document.getElementById('fileInput');
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+
+// ── Sidebar collapse ────────────────────────────────────
+let sidebarCollapsed = false;
+sidebarToggle.addEventListener('click', () => {
+  sidebarCollapsed = !sidebarCollapsed;
+  sidebar.classList.toggle('collapsed', sidebarCollapsed);
+  toggleIcon.style.transform = sidebarCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
+});
+
+// Mobile sidebar
+function openMobileSidebar() {
+  sidebar.classList.add('mobile-open');
+  document.getElementById('sidebarOverlay').classList.add('visible');
+}
+function closeMobileSidebar() {
+  sidebar.classList.remove('mobile-open');
+  document.getElementById('sidebarOverlay').classList.remove('visible');
+}
+
+// Show mobile menu button on small screens
+function checkMobileMenu() {
+  mobileMenuBtn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+}
+checkMobileMenu();
+window.addEventListener('resize', checkMobileMenu);
+
+// ── Set welcome timestamp ───────────────────────────────
+document.getElementById('welcomeTime').textContent = getTime();
+
+// ── Utility: get time string ────────────────────────────
+function getTime() {
+  return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+// ── Toast notifications ─────────────────────────────────
+function showToast(msg, iconClass = 'fa-check') {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<i class="fas ${iconClass}" style="color:var(--gold);"></i> ${msg}`;
+  toastContainer.appendChild(t);
+  setTimeout(() => {
+    t.classList.add('fadeout');
+    setTimeout(() => t.remove(), 350);
+  }, 2800);
+}
+
+// ── Add message to chat ─────────────────────────────────
+function addMessage(text, type) {
+  const row = document.createElement('div');
+  row.className = `msg-row ${type}`;
+
+  const av = document.createElement('div');
+  av.className = 'msg-avatar';
+  av.innerHTML = type === 'ai' ? '<i class="fas fa-gavel"></i>' : '<i class="fas fa-user"></i>';
+
+  const content = document.createElement('div');
+  content.className = 'msg-content';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  // render basic markdown
+  bubble.innerHTML = parseMarkdown(text);
+
+  const meta = document.createElement('div');
+  meta.className = 'msg-meta';
+
+  const time = document.createElement('span');
+  time.className = 'msg-time';
+  time.textContent = getTime();
+  meta.appendChild(time);
+
+  if (type === 'ai') {
+    const toolbar = document.createElement('div');
+    toolbar.className = 'msg-toolbar';
+    toolbar.innerHTML = `
+      <button class="tb-btn" onclick="copyMsg(this, \`${text.replace(/`/g,'').replace(/"/g,'&quot;')}\`)"><i class="far fa-copy"></i> Copy</button>
+      <button class="tb-btn" onclick="regenerateMsg(this)"><i class="fas fa-rotate-right"></i> Regenerate</button>
+      <button class="tb-btn" onclick="simplifyMsg(this)"><i class="fas fa-wand-magic-sparkles"></i> Simplify</button>
+      <button class="tb-btn" onclick="exportSummary()"><i class="fas fa-file-export"></i> Export</button>
+    `;
+    meta.appendChild(toolbar);
+  }
+
+  content.appendChild(bubble);
+  content.appendChild(meta);
+  row.appendChild(av);
+  row.appendChild(content);
+  messagesArea.appendChild(row);
+  scrollToBottom();
+  return { row, bubble };
+}
+
+// ── Simple markdown parser ──────────────────────────────
+function parseMarkdown(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>')
+    .replace(/^## (.+)$/gm, '<strong style="font-size:1rem;display:block;margin:8px 0 4px;">$1</strong>')
+    .replace(/^- (.+)$/gm, '&bull; $1<br>');
+}
+
+// ── Scroll chat to bottom ───────────────────────────────
+function scrollToBottom() {
+  messagesArea.scrollTop = messagesArea.scrollHeight;
+}
+
+// ── Thinking indicator ──────────────────────────────────
+const thinkingTexts = [
+  'Reading legal context...',
+  'Analyzing relevant statutes...',
+  'Identifying key legal principles...',
+  'Formulating structured guidance...'
+];
+
+function showThinking() {
+  thinkingEl.style.display = 'block';
+  thinkingSteps.innerHTML = '';
+  scrollToBottom();
+  let i = 0;
+  const interval = setInterval(() => {
+    if (i >= thinkingTexts.length) { clearInterval(interval); return; }
+    const step = document.createElement('div');
+    step.className = 't-step';
+    step.style.animationDelay = `${i * 0.3}s`;
+    step.innerHTML = `<i class="fas fa-check-circle"></i> ${thinkingTexts[i]}`;
+    thinkingSteps.appendChild(step);
+    scrollToBottom();
+    i++;
+  }, 450);
+  return interval;
+}
+
+function hideThinking(interval) {
+  clearInterval(interval);
+  thinkingEl.style.display = 'none';
+  thinkingSteps.innerHTML = '';
+}
+
+// ── Streaming AI response ───────────────────────────────
+function streamText(bubble, fullText, onComplete) {
+  bubble.innerHTML = '';
+  const parsed = parseMarkdown(fullText);
+  const temp = document.createElement('div');
+  temp.innerHTML = parsed;
+  const plain = temp.textContent;
+  let i = 0;
+  bubble.innerHTML = '';
+  const interval = setInterval(() => {
+    if (i >= plain.length) {
+      clearInterval(interval);
+      bubble.innerHTML = parsed;
+      if (onComplete) onComplete();
+      return;
+    }
+    // stream 3 chars at a time for speed
+    i = Math.min(i + 3, plain.length);
+    bubble.textContent = plain.slice(0, i) + '▋';
+    scrollToBottom();
+  }, 18);
+}
+
+// ── Handle send ─────────────────────────────────────────
+let isStreaming = false;
+
+function handleSend() {
+  const text = userInput.value.trim();
+  if (!text || isStreaming) return;
+  addMessage(text, 'user');
+  userInput.value = '';
+  sendBtn.disabled = true;
+  isStreaming = true;
+
+  const interval = showThinking();
+
+  const delay = 1800 + Math.random() * 600;
+  setTimeout(() => {
+    hideThinking(interval);
+    const reply = getAIResponse(text);
+    const { bubble } = addMessage('', 'ai');
+    streamText(bubble, reply, () => {
+      sendBtn.disabled = false;
+      isStreaming = false;
+    });
+  }, delay);
+}
+
+// ── Inject quick question ────────────────────────────────
+function injectQuestion(q) {
+  userInput.value = q;
+  userInput.focus();
+  // Smooth scroll to chat
+  document.querySelector('.chat-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Start new chat ───────────────────────────────────────
+function startNewChat() {
+  if (isStreaming) return;
+  messagesArea.innerHTML = '';
+  const row = document.createElement('div');
+  row.className = 'msg-row ai';
+  row.innerHTML = `
+    <div class="msg-avatar"><i class="fas fa-gavel"></i></div>
+    <div class="msg-content">
+      <div class="bubble">New session started. How may I assist you with your legal matter today?</div>
+      <div class="msg-meta"><span class="msg-time">${getTime()}</span></div>
+    </div>`;
+  messagesArea.appendChild(row);
+  showToast('New conversation started', 'fa-plus');
+}
+
+// ── Clear chat ───────────────────────────────────────────
+function clearChat() {
+  if (isStreaming) return;
+  startNewChat();
+}
+
+// ── Load history (demo) ──────────────────────────────────
+function loadHistory(el) {
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  if (window.innerWidth <= 768) closeMobileSidebar();
+  showToast('Loading conversation...', 'fa-clock-rotate-left');
+}
+
+// ── Message toolbar actions ──────────────────────────────
+function copyMsg(btn, text) {
+  const cleanText = text.replace(/<[^>]+>/g, '');
+  navigator.clipboard.writeText(cleanText).then(() => {
+    btn.classList.add('copied');
+    btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = '<i class="far fa-copy"></i> Copy';
+    }, 2000);
+  }).catch(() => showToast('Clipboard access denied.', 'fa-xmark'));
+}
+
+function regenerateMsg(btn) {
+  if (isStreaming) return;
+  const bubble = btn.closest('.msg-content').querySelector('.bubble');
+  showToast('Regenerating response...', 'fa-rotate-right');
+  const responses = Object.values(aiResponses);
+  const newReply = responses[Math.floor(Math.random() * responses.length)];
+  isStreaming = true;
+  sendBtn.disabled = true;
+  streamText(bubble, newReply, () => {
+    isStreaming = false;
+    sendBtn.disabled = false;
+  });
+}
+
+function simplifyMsg(btn) {
+  if (isStreaming) return;
+  const bubble = btn.closest('.msg-content').querySelector('.bubble');
+  const currentText = bubble.textContent;
+  showToast('Simplifying response...', 'fa-wand-magic-sparkles');
+  const simplified = 'Here is a simplified summary:\n\n' + currentText.slice(0, 180).trim() + '...\n\n*For the full legal context, click Regenerate.*';
+  isStreaming = true;
+  sendBtn.disabled = true;
+  streamText(bubble, simplified, () => {
+    isStreaming = false;
+    sendBtn.disabled = false;
+  });
+}
+
+function exportSummary() {
+  showToast('Summary exported to PDF!', 'fa-file-pdf');
+}
+
+// ── AI responses ─────────────────────────────────────────
+const aiResponses = {
+  property: `**Property Rights Overview**\n\nProperty rights typically include the right to **possess**, **use**, **exclude others**, and **transfer** your property.\n\nIf you are facing a dispute — such as a landlord refusing to return a deposit — here are your key steps:\n\n- **Document everything**: photographs, receipts, written communications\n- **Review your tenancy agreement** for deposit and return clauses\n- **Send a formal written notice** demanding return within a legal timeframe\n- **File in Small Claims Court** if the amount qualifies (usually under ₹1 lakh)\n- **Contact a legal aid organization** for free guidance\n\nWould you like me to help draft a formal demand letter?`,
+
+  complaint: `**Filing a Legal Complaint — Step-by-Step**\n\nHere is the structured process for filing a civil legal complaint:\n\n1. **Identify the correct forum**: Small claims, civil court, consumer forum, or regulatory authority\n2. **Draft your complaint**: Include facts, dates, parties, and the relief you are seeking\n3. **Gather supporting evidence**: Contracts, emails, photographs, witness statements\n4. **File the complaint**: Submit with the required court fee (varies by jurisdiction)\n5. **Serve notice** to the opposing party\n6. **Attend hearings**: Follow up diligently\n\nFor consumer disputes in India, the **Consumer Protection Act 2019** provides a strong framework. Would you like guidance on a specific type of complaint?`,
+
+  legalaid: `**Finding Legal Aid & Pro Bono Services**\n\nYou have several options for free or low-cost legal assistance:\n\n**Government Resources**\n- **NALSA** (National Legal Services Authority) — Free legal aid for eligible persons\n- **District Legal Services Authority (DLSA)** — Present in every district\n- **Lok Adalat** — Fast-track alternative dispute resolution\n\n**NGO & Pro Bono Services**\n- Many bar associations offer pro bono panels\n- Law school clinics (e.g., NLU clinics) provide free consultations\n- **iDAN** and **HRLN** for marginalized communities\n\n**Eligibility** for free aid typically includes income below a threshold, women, children, SC/ST individuals, and victims of disasters.\n\nShall I help locate DLSA contact details for your district?`,
+
+  contract: `**Contract Review — Key Clauses to Examine**\n\nBefore signing any service contract, carefully review:\n\n**High-Risk Clauses**\n- \`Indemnity Clause\`: Understand what liabilities you are assuming\n- \`Limitation of Liability\`: Caps on damages may work against you\n- \`Termination Clause\`: Notice periods, penalties, and grounds for termination\n\n**Important Clauses**\n- \`Payment Terms\`: Milestones, timelines, and late payment penalties\n- \`Dispute Resolution\`: Arbitration vs. court, governing law and jurisdiction\n- \`IP Ownership\`: Who owns work product created under the contract\n- \`Confidentiality\`: Scope and duration of NDA obligations\n\n**Recommendation**: For any contract above ₹50,000 or involving ongoing obligations, a professional legal review is strongly advised.\n\nWould you like me to analyze a specific clause in detail?`,
+
+  default: `**Legal Guidance — General Response**\n\nThank you for your question. I can provide structured guidance across the following areas:\n\n- **Property & Real Estate**: Disputes, ownership, tenancy\n- **Contract Law**: Review, drafting, enforcement\n- **Consumer Rights**: Complaints, refunds, deficiency in service\n- **Legal Aid**: Finding affordable or free legal assistance\n- **Civil Procedure**: Filing complaints, court process\n\nFor the most accurate guidance, please describe your situation in more detail — including relevant facts, parties involved, and the outcome you are seeking.\n\n*Note: This is general legal information and does not constitute legal advice. Please consult a qualified advocate for your specific matter.*`
+};
+
+function getAIResponse(question) {
+  const q = question.toLowerCase();
+  if (q.includes('property') || q.includes('land') || q.includes('real estate') || q.includes('tenant') || q.includes('landlord') || q.includes('deposit')) return aiResponses.property;
+  if (q.includes('complaint') || q.includes('file') || q.includes('sue') || q.includes('court') || q.includes('consumer')) return aiResponses.complaint;
+  if (q.includes('legal aid') || q.includes('free') || q.includes('pro bono') || q.includes('nalsa') || q.includes('lawyer')) return aiResponses.legalaid;
+  if (q.includes('contract') || q.includes('agreement') || q.includes('clause') || q.includes('sign') || q.includes('review')) return aiResponses.contract;
+  return aiResponses.default;
+}
+
+// ── Enter key to send ────────────────────────────────────
+userInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+});
+
+// ── Document upload & analysis ───────────────────────────
+function triggerDocUpload() {
+  fileInput.click();
+}
+
+function handleFileChange(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const name = file.name;
+  simulateDocAnalysis(name);
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('uploadArea').style.borderColor = 'var(--gold)';
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadArea').style.borderColor = '';
+  const file = e.dataTransfer.files[0];
+  if (file) simulateDocAnalysis(file.name);
+}
+
+const docAnalysisData = {
+  'Contract': {
+    risk: 'Medium', riskPct: 55, clauses: 4, confidence: '87%',
+    recommendation: 'Review the **indemnity clause** (§7.3) carefully. The limitation of liability appears asymmetric and may expose you to uncapped damages.',
+    clauseList: [
+      { label: 'Indemnity Clause', risk: 'high' },
+      { label: 'Termination Clause', risk: 'medium' },
+      { label: 'Payment Terms', risk: 'low' },
+      { label: 'Dispute Resolution', risk: 'medium' },
+    ]
+  },
+  'Property Deed': {
+    risk: 'Low', riskPct: 22, clauses: 3, confidence: '92%',
+    recommendation: 'Document appears standard. Verify the **boundary description** matches physical survey markers before registration.',
+    clauseList: [
+      { label: 'Title & Ownership', risk: 'low' },
+      { label: 'Encumbrance Status', risk: 'medium' },
+      { label: 'Transfer Conditions', risk: 'low' },
+    ]
+  },
+  'Complaint Draft': {
+    risk: 'High', riskPct: 76, clauses: 5, confidence: '79%',
+    recommendation: 'Complaint lacks sufficient **factual specificity**. Strengthen with documented evidence (receipts, emails) and cite the specific statute or consumer protection provision violated.',
+    clauseList: [
+      { label: 'Statement of Facts', risk: 'high' },
+      { label: 'Relief Claimed', risk: 'medium' },
+      { label: 'Evidence Annexures', risk: 'high' },
+      { label: 'Jurisdiction Basis', risk: 'medium' },
+      { label: 'Limitation Period', risk: 'low' },
+    ]
+  },
+  'Lease Agreement': {
+    risk: 'Medium', riskPct: 48, clauses: 6, confidence: '91%',
+    recommendation: 'The **security deposit clause** and **early termination penalty** require careful review. The notice period for eviction (§9) appears below statutory minimum.',
+    clauseList: [
+      { label: 'Security Deposit', risk: 'high' },
+      { label: 'Rent Escalation', risk: 'medium' },
+      { label: 'Maintenance Duties', risk: 'low' },
+      { label: 'Termination Notice', risk: 'medium' },
+      { label: 'Sub-letting Rights', risk: 'low' },
+      { label: 'Lock-in Period', risk: 'medium' },
+    ]
+  }
+};
+
+function simulateDocAnalysis(docName) {
+  const key = Object.keys(docAnalysisData).find(k => docName.includes(k)) || 'Contract';
+  const data = docAnalysisData[key] || docAnalysisData['Contract'];
+  const displayName = docName.length > 22 ? docName.slice(0, 22) + '…' : docName;
+
+  document.getElementById('analysisPlaceholder').style.display = 'none';
+  document.getElementById('analysisBadge').style.display = 'flex';
+
+  const card = document.getElementById('analysisCard');
+  card.classList.remove('visible');
+  card.style.opacity = '0';
+
+  // show loading in card area
+  setTimeout(() => {
+    document.getElementById('aDocName').textContent = displayName;
+    const riskLabel = document.getElementById('aRiskLabel');
+    riskLabel.textContent = data.risk;
+    riskLabel.className = 'am-value ' + (data.risk === 'Low' ? 'risk-low' : data.risk === 'Medium' ? 'risk-med' : 'risk-high');
+    document.getElementById('aRiskFill').style.width = '0%';
+    document.getElementById('aClauseCount').textContent = data.clauses;
+    document.getElementById('aConfidence').textContent = data.confidence;
+    document.getElementById('aRecText').innerHTML = parseMarkdown(data.recommendation);
+
+    // clause list
+    const clauseEl = document.getElementById('aClauses');
+    clauseEl.innerHTML = data.clauseList.map(c => `
+      <div class="a-clause-item">
+        <span class="clause-dot ${c.risk}"></span>
+        <span class="clause-label">${c.label}</span>
+        <span class="clause-risk">${c.risk.charAt(0).toUpperCase() + c.risk.slice(1)}</span>
+      </div>`).join('');
+
+    card.classList.add('visible');
+    card.style.transition = 'opacity 0.4s';
+    card.style.opacity = '1';
+
+    // animate risk bar
+    setTimeout(() => {
+      document.getElementById('aRiskFill').style.width = data.riskPct + '%';
+    }, 200);
+
+    showToast(`Analysis complete: ${key}`, 'fa-magnifying-glass-chart');
+    // inject question into chat
+    setTimeout(() => injectQuestion(`Analyze my ${key.toLowerCase()} document and explain the key risks.`), 400);
+  }, 900);
+}
+
+// ── Upgrade modal (demo) ─────────────────────────────────
+function showUpgradeModal() {
+  showToast('Upgrade to CounselAI Pro — coming soon!', 'fa-bolt');
+}
+</script>
+</body>
+</html>

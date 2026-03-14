@@ -1,0 +1,89 @@
+# ============================================================================
+# Cloud Build configuration for CounselAI
+# ============================================================================
+# Steps: test → build Docker image → push to Artifact Registry → deploy to Cloud Run
+#
+# Trigger with:
+#   gcloud builds submit --config infra/cloudbuild.yaml \
+#     --substitutions=_REGION=us-central1
+# ============================================================================
+
+substitutions:
+  _REGION: us-central1
+  _SERVICE_NAME: counselai-api
+  _REPO_NAME: counselai
+  _IMAGE_NAME: counselai-api
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  # ── Step 1: Run tests ────────────────────────────────────────────────────
+  - name: "python:3.11-slim"
+    id: "test"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        pip install --no-cache-dir -r requirements.txt
+        pip install --no-cache-dir pytest pytest-asyncio httpx
+        python -m pytest tests/ -v --tb=short
+
+  # ── Step 2: Build Docker image ──────────────────────────────────────────
+  - name: "gcr.io/cloud-builders/docker"
+    id: "build"
+    args:
+      - "build"
+      - "-t"
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${COMMIT_SHA}"
+      - "-t"
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest"
+      - "-f"
+      - "infra/Dockerfile"
+      - "."
+    waitFor: ["test"]
+
+  # ── Step 3: Push to Artifact Registry ───────────────────────────────────
+  - name: "gcr.io/cloud-builders/docker"
+    id: "push"
+    args:
+      - "push"
+      - "--all-tags"
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}"
+    waitFor: ["build"]
+
+  # ── Step 4: Deploy to Cloud Run ─────────────────────────────────────────
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    id: "deploy"
+    entrypoint: "gcloud"
+    args:
+      - "run"
+      - "deploy"
+      - "${_SERVICE_NAME}"
+      - "--image"
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${COMMIT_SHA}"
+      - "--region"
+      - "${_REGION}"
+      - "--platform"
+      - "managed"
+      - "--allow-unauthenticated"
+      - "--port"
+      - "8080"
+      - "--memory"
+      - "1Gi"
+      - "--cpu"
+      - "1"
+      - "--min-instances"
+      - "0"
+      - "--max-instances"
+      - "10"
+      - "--set-secrets"
+      - "GCP_PROJECT=GCP_PROJECT:latest,GCP_LOCATION=GCP_LOCATION:latest,VERTEX_INDEX_ID=VERTEX_INDEX_ID:latest,VERTEX_ENDPOINT_ID=VERTEX_ENDPOINT_ID:latest,VERTEX_INDEX_DEPLOYED_ID=VERTEX_INDEX_DEPLOYED_ID:latest,GCS_BUCKET=GCS_BUCKET:latest,GEMINI_MODEL=GEMINI_MODEL:latest,FIREBASE_PROJECT_ID=FIREBASE_PROJECT_ID:latest"
+    waitFor: ["push"]
+
+# ── Images to store in Artifact Registry ──────────────────────────────────
+images:
+  - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:${COMMIT_SHA}"
+  - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/${_IMAGE_NAME}:latest"
+
+timeout: "1200s"
